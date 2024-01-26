@@ -2,25 +2,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Head from 'next/head';
 import { useState } from 'react';
-import DataTable from './components/table';
 
-async function saveRecord(recordName: string) {
-  await fetch('/api/records', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ name: recordName }),
-  });
+export async function fetchData() {
+  const response = await fetch('/api/tests');
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+  return response.json();
 }
 
 export default function HomePage() {
-  const [recordName, setRecordName] = useState('');
+  const [name, setName] = useState('');
+  const [getData, setData] = useState<any>();
 
-  const handleAddClick = async () => {
-    await saveRecord(recordName).then(() => {
-      setRecordName('');
-    });
+  const handleClick = async () => {
+    const data = await fetchData();
+    setData(data);
   };
 
   return (
@@ -34,18 +31,17 @@ export default function HomePage() {
           <div className="flex space-x-2 w-1/2">
             <Input
               placeholder="Name"
-              value={recordName}
-              onChange={(e) => setRecordName(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
 
-            <Button variant="outline">Search</Button>
-            <Button variant="default" onClick={handleAddClick}>
-              Add
+            <Button variant="outline" onClick={handleClick}>
+              Test
             </Button>
+
+            {getData && getData.name}
           </div>
         </div>
-
-        <DataTable />
       </div>
     </>
   );

@@ -15,8 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Record } from '@prisma/client';
 
-export default function DataTable() {
+export default function DataTable({ records }: { records: Record[] }) {
   return (
     <>
       <Table>
@@ -28,11 +29,16 @@ export default function DataTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow>
-            <TableCell className="font-medium">1</TableCell>
-            <TableCell>Jensen</TableCell>
-            <TableCell className="text-right">$250.00</TableCell>
-          </TableRow>
+          {records &&
+            records.map((record) => (
+              <TableRow>
+                <TableCell className="font-medium">{record.id}</TableCell>
+                <TableCell>{record.name}</TableCell>
+                <TableCell className="text-right">
+                  {new Date(record.date).toDateString()}
+                </TableCell>
+              </TableRow>
+            ))}
         </TableBody>
       </Table>
 
