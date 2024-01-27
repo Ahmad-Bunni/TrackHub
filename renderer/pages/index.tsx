@@ -4,24 +4,30 @@ import ListTable from '@/components/ListTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Item } from '@prisma/client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function IndexPage() {
   const [item, setItem] = useState('');
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
 
+  const handleMessage = useCallback((_event, args) => {
+    setItems(args);
+  }, []);
+
   useEffect(() => {
-    const handleMessage = (_event, args) => setItems(args);
+    window.electron.startListening(handleMessage, 'listed');
 
     window.electron.listItems();
 
-    window.electron.itemsListed(handleMessage);
-
     return () => {
-      window.electron.stopListening(handleMessage);
+      window.electron.stopListening(handleMessage, 'listed');
     };
-  }, []);
+  }, [handleMessage]);
+
+  useEffect(() => {
+    window.electron.searchItem(item);
+  }, [item]);
 
   const handleOk = () => {
     window.electron.addItem(item);
@@ -32,8 +38,6 @@ export default function IndexPage() {
     setOpen(true);
   };
 
-  const searchItem = () => {};
-
   return (
     <Layout>
       <div className="container py-4 space-y-4">
@@ -43,10 +47,6 @@ export default function IndexPage() {
             value={item}
             onChange={(e) => setItem(e.target.value)}
           />
-
-          <Button variant="outline" onClick={searchItem}>
-            Search
-          </Button>
 
           <Button variant="default" onClick={addItem}>
             Add

@@ -3,9 +3,15 @@ import { IpcRendererEvent } from 'electron/main';
 
 contextBridge.exposeInMainWorld('electron', {
   addItem: (item: string) => ipcRenderer.send('add', item),
+  searchItem: (item: string) => ipcRenderer.send('search', item),
   listItems: () => ipcRenderer.send('list'),
-  itemsListed: (handler: (event: IpcRendererEvent, ...args: any[]) => void) =>
-    ipcRenderer.on('listed', handler),
-  stopListening: (handler: (event: IpcRendererEvent, ...args: any[]) => void) =>
-    ipcRenderer.removeListener('listed', handler),
+
+  startListening: (
+    handler: (event: IpcRendererEvent, ...args: any[]) => void,
+    name: string
+  ) => ipcRenderer.on(name, handler),
+  stopListening: (
+    handler: (event: IpcRendererEvent, ...args: any[]) => void,
+    name: string
+  ) => ipcRenderer.removeListener(name, handler),
 });

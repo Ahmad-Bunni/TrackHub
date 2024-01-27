@@ -3,7 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 electron_1.contextBridge.exposeInMainWorld('electron', {
     addItem: (item) => electron_1.ipcRenderer.send('add', item),
+    searchItem: (item) => electron_1.ipcRenderer.send('search', item),
     listItems: () => electron_1.ipcRenderer.send('list'),
-    itemsListed: (handler) => electron_1.ipcRenderer.on('listed', handler),
-    stopListening: (handler) => electron_1.ipcRenderer.removeListener('listed', handler),
+    startListening: (handler, name) => electron_1.ipcRenderer.on(name, handler),
+    stopListening: (handler, name) => electron_1.ipcRenderer.removeListener(name, handler),
 });

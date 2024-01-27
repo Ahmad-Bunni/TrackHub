@@ -1,13 +1,14 @@
-// Native
-import { PrismaClient } from '@prisma/client';
+// Node.js modules
 import { join } from 'path';
-import { format } from 'url';
 
-const prisma = new PrismaClient();
-// Packages
-import { BrowserWindow, app, ipcMain } from 'electron';
+// Electron modules
+import { BrowserWindow, app } from 'electron';
 import isDev from 'electron-is-dev';
 import prepareNext from 'electron-next';
+
+// Application Requirements
+import './ipc-handlers';
+import './menu';
 
 // Prepare the renderer once the app is ready
 app.on('ready', async () => {
@@ -23,39 +24,11 @@ app.on('ready', async () => {
     },
   });
 
-  const url = isDev
-    ? 'http://localhost:8000/'
-    : format({
-        pathname: join(__dirname, '../renderer/out/index.html'),
-        protocol: 'file:',
-        slashes: true,
-      });
+  const devPath = 'http://localhost:8000/';
+  const prodPath = `file://${join(__dirname, '../renderer/out/index.html')}`;
 
-  mainWindow.loadURL(url);
+  mainWindow.loadURL(isDev ? devPath : prodPath);
 });
 
 // Quit the app once all windows are closed
 app.on('window-all-closed', app.quit);
-
-// IPC Handlers
-ipcMain.on('add', async (event, item) => {
-  await prisma.item.create({
-    data: {
-      name: item,
-    },
-  });
-
-  // Use the shared function to get items
-  const items = await getItems();
-  event.sender.send('listed', items);
-});
-
-ipcMain.on('list', async (event) => {
-  // Use the shared function to get items
-  const items = await getItems();
-  event.sender.send('listed', items);
-});
-
-async function getItems() {
-  return await prisma.item.findMany();
-}
