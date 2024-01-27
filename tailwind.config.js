@@ -4,8 +4,6 @@ module.exports = {
   content: [
     './renderer/pages/**/*.{ts,tsx}',
     './renderer/components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
   ],
   prefix: '',
   theme: {

@@ -1,15 +1,14 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
-
-model Record {
-  id Int @id @default(autoincrement())
-
+model Item {
+  id   Int      @id @default(autoincrement())
   name String
   date DateTime @default(now())
 }

@@ -1,42 +1,55 @@
 {
   "private": true,
-  "name": "tracker-hub",
-  "description": "Records tracking",
+  "main": "main/index.js",
+  "name": "track-hub",
   "version": "1.0.0",
-  "author": "",
-  "main": "app/background.js",
   "scripts": {
-    "dev": "nextron",
-    "build": "nextron build",
-    "postinstall": "electron-builder install-app-deps",
-    "build:win": "nextron build --win --x64"
+    "clean": "rimraf dist main renderer/out renderer/.next",
+    "dev": "npm run build-electron && electron .",
+    "build-renderer": "next build renderer",
+    "build-electron": "tsc -p electron-src",
+    "build": "npm run build-renderer && npm run build-electron",
+    "pack-app": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "type-check": "tsc -p ./renderer/tsconfig.json && tsc -p ./electron-src/tsconfig.json"
   },
   "dependencies": {
     "@prisma/client": "^5.8.1",
+    "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-icons": "^1.3.0",
-    "@radix-ui/react-separator": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
-    "@tanstack/react-query": "^5.17.19",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "electron-serve": "^1.1.0",
-    "electron-store": "^8.1.0",
+    "electron-is-dev": "^1.2.0",
+    "electron-next": "^3.1.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@types/node": "^18.11.18",
-    "@types/react": "^18.0.26",
-    "autoprefixer": "^10.4.16",
-    "electron": "^26.2.2",
-    "electron-builder": "^24.6.4",
-    "next": "^12.3.4",
-    "nextron": "^8.12.0",
-    "postcss": "^8.4.30",
-    "prisma": "^5.8.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "@types/node": "^14.18.63",
+    "@types/react": "^16.14.56",
+    "@types/react-dom": "^16.9.24",
+    "autoprefixer": "^10.4.17",
+    "electron": "^27.1.2",
+    "electron-builder": "^24.9.1",
+    "next": "latest",
+    "postcss": "^8.4.33",
+    "rimraf": "^3.0.2",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.2.2"
+    "typescript": "^4.9.5"
+  },
+  "build": {
+    "asar": true,
+    "files": [
+      "main",
+      "renderer/out"
+    ],
+    "extraResources": [
+      "prisma/**/*",
+      "node_modules/.prisma/**/*",
+      "node_modules/@prisma/client/**/*"
+    ]
   }
 }
