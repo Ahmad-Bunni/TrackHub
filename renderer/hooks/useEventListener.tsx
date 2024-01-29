@@ -1,9 +1,10 @@
-// useEventListener.js
 import { useToast } from '@/components/ui/use-toast';
-import { Events } from '@/interfaces/events';
+import { Events } from '@/renderer/interfaces';
+import { usePaginationStore } from '@/renderer/state';
 import { useCallback, useEffect } from 'react';
 
-function useEventListener(setItems) {
+export function useEventListener() {
+  const { setItems } = usePaginationStore();
   const { toast } = useToast();
 
   const handleMessage = useCallback(
@@ -33,5 +34,3 @@ function useEventListener(setItems) {
     };
   }, [handleMessage, handleError]);
 }
-
-export default useEventListener;

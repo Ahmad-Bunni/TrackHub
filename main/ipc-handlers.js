@@ -5,7 +5,19 @@ const electron_1 = require("electron");
 const prisma = new client_1.PrismaClient();
 electron_1.ipcMain.on('add', async (event, name) => {
     try {
-        await prisma.item.create({ data: { name } });
+        await prisma.item.create({ data: { name: name.trim() } });
+        event.sender.send('listed', await getItems());
+    }
+    catch (error) {
+        event.sender.send('error', error);
+    }
+});
+electron_1.ipcMain.on('update', async (event, id, note) => {
+    try {
+        await prisma.item.update({
+            where: { id: id },
+            data: { note: note?.trim() },
+        });
         event.sender.send('listed', await getItems());
     }
     catch (error) {

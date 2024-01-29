@@ -5,13 +5,12 @@ import {
   PaginationPrevious,
   Pagination as UIPagination,
 } from '@/components/ui/pagination';
+import { usePaginationStore } from '@/renderer/state';
 
-const Pagination = ({
-  currentPage,
-  totalPages,
-  goToPreviousPage,
-  goToNextPage,
-}) => {
+const Pagination = () => {
+  const { currentPage, totalPages, goToPreviousPage, goToNextPage } =
+    usePaginationStore();
+
   return (
     <UIPagination>
       <PaginationContent>

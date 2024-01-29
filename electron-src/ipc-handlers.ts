@@ -2,9 +2,21 @@ import { PrismaClient } from '@prisma/client';
 import { ipcMain } from 'electron';
 const prisma = new PrismaClient();
 
-ipcMain.on('add', async (event, name) => {
+ipcMain.on('add', async (event, name: string) => {
   try {
-    await prisma.item.create({ data: { name } });
+    await prisma.item.create({ data: { name: name.trim() } });
+    event.sender.send('listed', await getItems());
+  } catch (error) {
+    event.sender.send('error', error);
+  }
+});
+
+ipcMain.on('update', async (event, id: number, note?: string) => {
+  try {
+    await prisma.item.update({
+      where: { id: id },
+      data: { note: note?.trim() },
+    });
     event.sender.send('listed', await getItems());
   } catch (error) {
     event.sender.send('error', error);

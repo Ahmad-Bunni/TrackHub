@@ -1,3 +1,9 @@
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Table,
   TableBody,
@@ -6,22 +12,28 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Item } from '@prisma/client';
-import { useState } from 'react';
+import { useItemStore } from '@/renderer/state';
+import { KeyboardEvent, useState } from 'react';
 import Dialog from './AlertDialog';
 import { Button } from './ui/button';
+const ListTable = () => {
+  const { currentItems, id, setId, note, setNote } = useItemStore();
+  const [deleteItemId, setDeleteItemId] = useState<number>();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-const ListTable = ({ currentItems }: { currentItems: Item[] }) => {
-  const [open, setOpen] = useState(false);
-  const [currentId, setCurrentItem] = useState<number>();
-
-  const handleConfirm = () => {
-    window.electron.removeItem(currentId);
+  const onConfirmDeletion = () => {
+    window.electron.removeItem(deleteItemId);
   };
 
   const onDelete = (id: number) => {
-    setCurrentItem(id);
-    setOpen(true);
+    setDeleteItemId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      window.electron.updateNote(id, note);
+    }
   };
 
   return (
@@ -31,6 +43,7 @@ const ListTable = ({ currentItems }: { currentItems: Item[] }) => {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>Note</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -38,8 +51,42 @@ const ListTable = ({ currentItems }: { currentItems: Item[] }) => {
             <TableRow key={item.id}>
               <TableCell>{item.name}</TableCell>
               <TableCell>{new Date(item.date).toDateString()}</TableCell>
-              <TableCell className="text-right">
+              <TableCell>{item.note}</TableCell>
+              <TableCell className="text-right space-x-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setNote(item.note);
+                        setId(item.id);
+                      }}
+                    >
+                      Add Note
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">
+                          Press Enter to set the note for{' '}
+                          <span className="font-bold">{item.name}</span>
+                        </p>
+                      </div>
+                      <Input
+                        onKeyDown={handleKeyDown}
+                        onChange={(e) => {
+                          setNote(e.target.value);
+                        }}
+                        placeholder="Enter note"
+                        className="col-span-2 h-8"
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
                 <Button
+                  variant="destructive"
                   onClick={() => {
                     onDelete(item.id);
                   }}
@@ -54,9 +101,9 @@ const ListTable = ({ currentItems }: { currentItems: Item[] }) => {
 
       <Dialog
         text="Delete Item?"
-        open={open}
-        setOpen={setOpen}
-        onConfirm={handleConfirm}
+        open={deleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        onConfirm={onConfirmDeletion}
       />
     </>
   );

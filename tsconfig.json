@@ -18,10 +18,7 @@
     "paths": {
       "@/*": ["./*"],
       "@/lib/*": ["renderer/lib/*"],
-      "@/components/*": ["renderer/components/*"],
-      "@/hooks/*": ["renderer/hooks/*"],
-      "@/interfaces/*": ["renderer/interfaces/*"],
-      "@/styles/*": ["renderer/styles/*"]
+      "@/components/*": ["renderer/components/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "next.config.js"],

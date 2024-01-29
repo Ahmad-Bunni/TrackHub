@@ -1,16 +1,16 @@
+import ListTable from '@/components/ListTable';
+import Pagination from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Toaster } from '@/components/ui/toaster';
-import Layout from '@/renderer/Layout';
-import DataView from '@/renderer/components/DataView';
-import { Item } from '@prisma/client';
-import { useEffect, useState } from 'react';
-import useEventListener from '../hooks/useEventListener';
+import { useEventListener } from '@/renderer/hooks';
+import { useItemStore } from '@/renderer/state';
+import { PlusIcon } from '@radix-ui/react-icons';
+import { KeyboardEvent, useEffect } from 'react';
 
 export default function IndexPage() {
-  const [name, setName] = useState('');
-  const [items, setItems] = useState<Item[]>([]);
-  useEventListener(setItems);
+  const { name, setName } = useItemStore();
+  useEventListener();
 
   useEffect(() => {
     window.electron.searchItem(name);
@@ -21,24 +21,40 @@ export default function IndexPage() {
     setName('');
   };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      addItem();
+    }
+  };
+
   return (
-    <Layout>
-      <div className="container py-4 space-y-4">
-        <div className="flex space-x-2 w-1/2">
-          <Input
-            placeholder="Enter item name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Button variant="default" onClick={addItem} disabled={!name}>
-            Add
-          </Button>
-        </div>
+    <div className="container py-4 space-y-4">
+      <div className="flex space-x-2">
+        <Input
+          className="w-1/3"
+          placeholder="Search or enter new record"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
 
-        <DataView items={items} />
-
-        <Toaster />
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={addItem}
+          disabled={!name}
+        >
+          <PlusIcon className="h-4 w-4" />
+        </Button>
       </div>
-    </Layout>
+
+      <div>
+        <ListTable />
+
+        <Pagination />
+      </div>
+
+      <Toaster />
+    </div>
   );
 }

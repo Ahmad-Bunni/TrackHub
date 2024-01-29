@@ -7,11 +7,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { KeyboardEvent } from 'react';
 
 const Dialog = ({ text, open, setOpen, onConfirm }) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      onConfirm();
+    }
+  };
+
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogContent>
+      <AlertDialogContent onKeyDown={handleKeyDown}>
         <AlertDialogHeader>
           <AlertDialogTitle>{text}</AlertDialogTitle>
         </AlertDialogHeader>

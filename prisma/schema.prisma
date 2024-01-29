@@ -10,5 +10,6 @@ generator client {
 model Item {
   id   Int      @id @default(autoincrement())
   name String   @unique
+  note String?
   date DateTime @default(now())
 }

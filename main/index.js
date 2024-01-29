@@ -9,25 +9,30 @@ const path_1 = require("path");
 const electron_1 = require("electron");
 const electron_is_dev_1 = __importDefault(require("electron-is-dev"));
 const electron_next_1 = __importDefault(require("electron-next"));
-// Application Requirements
+// Application handlers
 require("./ipc-handlers");
+// Application Menu
 require("./menu");
 // Prepare the renderer once the app is ready
 electron_1.app.on('ready', async () => {
     await (0, electron_next_1.default)('./renderer');
     const mainWindow = new electron_1.BrowserWindow({
+        fullscreenable: false,
         width: 1024,
         height: 768,
-        icon: 'hub.ico',
+        icon: 'resources/hub.ico',
+        autoHideMenuBar: true,
+        resizable: false,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
             preload: (0, path_1.join)(__dirname, 'preload.js'),
         },
     });
-    const devPath = 'http://localhost:8000/';
-    const prodPath = `file://${(0, path_1.join)(__dirname, '../renderer/out/index.html')}`;
-    mainWindow.loadURL(electron_is_dev_1.default ? devPath : prodPath);
+    mainWindow.loadURL(electron_is_dev_1.default
+        ? 'http://localhost:8000/' // dev
+        : `file://${(0, path_1.join)(__dirname, '../renderer/out/index.html')}` //prod
+    );
 });
 // Quit the app once all windows are closed
 electron_1.app.on('window-all-closed', electron_1.app.quit);

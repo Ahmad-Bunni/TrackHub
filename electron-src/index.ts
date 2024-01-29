@@ -6,8 +6,10 @@ import { BrowserWindow, app } from 'electron';
 import isDev from 'electron-is-dev';
 import prepareNext from 'electron-next';
 
-// Application Requirements
+// Application handlers
 import './ipc-handlers';
+
+// Application Menu
 import './menu';
 
 // Prepare the renderer once the app is ready
@@ -15,9 +17,12 @@ app.on('ready', async () => {
   await prepareNext('./renderer');
 
   const mainWindow = new BrowserWindow({
+    fullscreenable: false,
     width: 1024,
     height: 768,
-    icon: 'hub.ico',
+    icon: 'resources/hub.ico',
+    autoHideMenuBar: true,
+    resizable: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -25,10 +30,11 @@ app.on('ready', async () => {
     },
   });
 
-  const devPath = 'http://localhost:8000/';
-  const prodPath = `file://${join(__dirname, '../renderer/out/index.html')}`;
-
-  mainWindow.loadURL(isDev ? devPath : prodPath);
+  mainWindow.loadURL(
+    isDev
+      ? 'http://localhost:8000/' // dev
+      : `file://${join(__dirname, '../renderer/out/index.html')}` //prod
+  );
 });
 
 // Quit the app once all windows are closed

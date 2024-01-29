@@ -3,6 +3,8 @@ import { IpcRendererEvent } from 'electron/main';
 
 contextBridge.exposeInMainWorld('electron', {
   addItem: (name: string) => ipcRenderer.send('add', name),
+  updateNote: (id: number, note?: string) =>
+    ipcRenderer.send('update', id, note),
   removeItem: (id: number) => ipcRenderer.send('remove', id),
   searchItem: (name: string) => ipcRenderer.send('search', name),
   listItems: () => ipcRenderer.send('list'),
