@@ -3,15 +3,43 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const electron_1 = require("electron");
 const prisma = new client_1.PrismaClient();
-electron_1.ipcMain.on('add', async (event, item) => {
-    await prisma.item.create({ data: { name: item } });
-    event.sender.send('listed', await getItems());
+electron_1.ipcMain.on('add', async (event, name) => {
+    try {
+        await prisma.item.create({ data: { name } });
+        event.sender.send('listed', await getItems());
+    }
+    catch (error) {
+        event.sender.send('error', error);
+    }
+});
+electron_1.ipcMain.on('remove', async (event, id) => {
+    try {
+        await prisma.item.delete({
+            where: {
+                id,
+            },
+        });
+        event.sender.send('listed', await getItems());
+    }
+    catch (error) {
+        event.sender.send('error', error);
+    }
 });
 electron_1.ipcMain.on('list', async (event) => {
-    event.sender.send('listed', await getItems());
+    try {
+        event.sender.send('listed', await getItems());
+    }
+    catch (error) {
+        event.sender.send('error', error);
+    }
 });
-electron_1.ipcMain.on('search', async (event, item) => {
-    event.sender.send('listed', await getItems(item));
+electron_1.ipcMain.on('search', async (event, name) => {
+    try {
+        event.sender.send('listed', await getItems(name));
+    }
+    catch (error) {
+        event.sender.send('error', error);
+    }
 });
 async function getItems(searchQuery = '') {
     if (searchQuery) {

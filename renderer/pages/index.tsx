@@ -1,41 +1,24 @@
-import Dialog from '@/components/AlertDialog';
-import Layout from '@/components/Layout';
-import ListTable from '@/components/ListTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Toaster } from '@/components/ui/toaster';
+import Layout from '@/renderer/Layout';
+import DataView from '@/renderer/components/DataView';
 import { Item } from '@prisma/client';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import useEventListener from '../hooks/useEventListener';
 
 export default function IndexPage() {
-  const [item, setItem] = useState('');
-  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
   const [items, setItems] = useState<Item[]>([]);
-
-  const handleMessage = useCallback((_event, args) => {
-    setItems(args);
-  }, []);
+  useEventListener(setItems);
 
   useEffect(() => {
-    window.electron.startListening(handleMessage, 'listed');
-
-    window.electron.listItems();
-
-    return () => {
-      window.electron.stopListening(handleMessage, 'listed');
-    };
-  }, [handleMessage]);
-
-  useEffect(() => {
-    window.electron.searchItem(item);
-  }, [item]);
-
-  const handleOk = () => {
-    window.electron.addItem(item);
-    setItem('');
-  };
+    window.electron.searchItem(name);
+  }, [name]);
 
   const addItem = () => {
-    setOpen(true);
+    window.electron.addItem(name);
+    setName('');
   };
 
   return (
@@ -44,18 +27,17 @@ export default function IndexPage() {
         <div className="flex space-x-2 w-1/2">
           <Input
             placeholder="Enter item name"
-            value={item}
-            onChange={(e) => setItem(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
-
-          <Button variant="default" onClick={addItem}>
+          <Button variant="default" onClick={addItem} disabled={!name}>
             Add
           </Button>
         </div>
 
-        <ListTable items={items} />
+        <DataView items={items} />
 
-        <Dialog open={open} setOpen={setOpen} onOk={handleOk} />
+        <Toaster />
       </div>
     </Layout>
   );

@@ -16,8 +16,9 @@ require("./menu");
 electron_1.app.on('ready', async () => {
     await (0, electron_next_1.default)('./renderer');
     const mainWindow = new electron_1.BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1024,
+        height: 768,
+        icon: 'hub.ico',
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,

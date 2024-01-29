@@ -2,17 +2,42 @@ import { PrismaClient } from '@prisma/client';
 import { ipcMain } from 'electron';
 const prisma = new PrismaClient();
 
-ipcMain.on('add', async (event, item) => {
-  await prisma.item.create({ data: { name: item } });
-  event.sender.send('listed', await getItems());
+ipcMain.on('add', async (event, name) => {
+  try {
+    await prisma.item.create({ data: { name } });
+    event.sender.send('listed', await getItems());
+  } catch (error) {
+    event.sender.send('error', error);
+  }
+});
+
+ipcMain.on('remove', async (event, id) => {
+  try {
+    await prisma.item.delete({
+      where: {
+        id,
+      },
+    });
+    event.sender.send('listed', await getItems());
+  } catch (error) {
+    event.sender.send('error', error);
+  }
 });
 
 ipcMain.on('list', async (event) => {
-  event.sender.send('listed', await getItems());
+  try {
+    event.sender.send('listed', await getItems());
+  } catch (error) {
+    event.sender.send('error', error);
+  }
 });
 
-ipcMain.on('search', async (event, item) => {
-  event.sender.send('listed', await getItems(item));
+ipcMain.on('search', async (event, name) => {
+  try {
+    event.sender.send('listed', await getItems(name));
+  } catch (error) {
+    event.sender.send('error', error);
+  }
 });
 
 async function getItems(searchQuery = '') {

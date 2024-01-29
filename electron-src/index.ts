@@ -15,8 +15,9 @@ app.on('ready', async () => {
   await prepareNext('./renderer');
 
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1024,
+    height: 768,
+    icon: 'hub.ico',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
