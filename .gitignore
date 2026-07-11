@@ -1,8 +1,32 @@
+# Windows reserved device name (cmd/OpenCode redirects can create this)
+nul
+NUL
+
+# Dependencies
 node_modules
-*.log
-.next
-app
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
 dist
-*.db*
-.next
 out
+renderer/out
+
+# Legacy Next.js (kept so old artifacts never get added)
+.next
+
+# Local database
+*.db*
+
+# Logs & caches
+*.log
+.vite
+tsconfig.tsbuildinfo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store

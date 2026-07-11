@@ -1,6 +1,5 @@
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
 }
 
 generator client {
@@ -8,8 +7,26 @@ generator client {
 }
 
 model Item {
-  id   Int      @id @default(autoincrement())
-  name String   @unique
-  note String?
-  date DateTime @default(now())
+  id    Int      @id @default(autoincrement())
+  name  String   @unique
+  note  String?
+  date  DateTime @default(now())
+  tags  ItemTag[]
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  color String
+  items ItemTag[]
+}
+
+model ItemTag {
+  id   Int    @id @default(autoincrement())
+  itemId Int
+  tagId  Int
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tag  Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, tagId])
 }

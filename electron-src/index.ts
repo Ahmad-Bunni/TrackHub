@@ -4,18 +4,13 @@ import { join } from 'path';
 // Electron modules
 import { BrowserWindow, app } from 'electron';
 import isDev from 'electron-is-dev';
-import prepareNext from 'electron-next';
 
 // Application handlers
 import './ipc-handlers';
 
-// Application Menu
-import './menu';
 
-// Prepare the renderer once the app is ready
+// Create the main window
 app.on('ready', async () => {
-  await prepareNext('./renderer');
-
   const mainWindow = new BrowserWindow({
     fullscreenable: false,
     width: 1024,
@@ -32,8 +27,8 @@ app.on('ready', async () => {
 
   mainWindow.loadURL(
     isDev
-      ? 'http://localhost:8000/' // dev
-      : `file://${join(__dirname, '../renderer/out/index.html')}` //prod
+      ? 'http://localhost:5173/' // Vite dev server
+      : `file://${join(__dirname, '../renderer/out/index.html')}` // prod
   );
 });
 
