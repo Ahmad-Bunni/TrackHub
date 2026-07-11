@@ -24,7 +24,7 @@ const NoteSelector = ({ item }: { item: Item }) => {
   return (
     <Popover open={open} onOpenChange={(o) => { setDraft(item.note || ''); setOpen(o); }}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" className="h-5 w-5 p-0 bg-background border rounded-md hover:bg-accent">
+        <Button variant="outline" size="icon" className="h-5 w-5 p-0 bg-background border rounded-md hover:bg-accent cursor-pointer">
           <Pencil className="h-3 w-3" />
         </Button>
       </PopoverTrigger>
@@ -43,7 +43,7 @@ const NoteSelector = ({ item }: { item: Item }) => {
           placeholder="Enter note"
           autoFocus
         />
-        <Button size="sm" className="h-7 text-xs w-full" onClick={save}>Save</Button>
+        <Button size="sm" className="h-7 text-xs w-full cursor-pointer" onClick={save}>Save</Button>
       </PopoverContent>
     </Popover>
   );

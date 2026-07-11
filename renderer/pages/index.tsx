@@ -79,7 +79,7 @@ export default function IndexPage() {
           <div className="flex items-center gap-2">
             <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
               <PopoverTrigger asChild>
-                <Button variant={filterDate ? 'default' : 'outline'} size="icon" className="shrink-0">
+                <Button variant={filterDate ? 'default' : 'outline'} size="icon" className="shrink-0 cursor-pointer">
                   <Calendar className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
@@ -102,14 +102,14 @@ export default function IndexPage() {
                   }
                 `}</style>
                 {filterDate && (
-                  <Button variant="ghost" size="sm" onClick={() => { setFilterDate(null); (window as any).electron.searchWithDate({ name: name || undefined, tagId: filterTagId || undefined }); }} className="w-full h-7 text-xs mt-1">
+                  <Button variant="ghost" size="sm" onClick={() => { setFilterDate(null); (window as any).electron.searchWithDate({ name: name || undefined, tagId: filterTagId || undefined }); }} className="w-full h-7 text-xs mt-1 cursor-pointer">
                     Clear Date
                   </Button>
                 )}
               </PopoverContent>
             </Popover>
             {filterDate && (
-              <Button variant="ghost" size="sm" onClick={() => { setFilterDate(null); (window as any).electron.searchWithDate({ name: name || undefined, tagId: filterTagId || undefined }); }} className="shrink-0 text-xs">
+              <Button variant="ghost" size="sm" onClick={() => { setFilterDate(null); (window as any).electron.searchWithDate({ name: name || undefined, tagId: filterTagId || undefined }); }} className="shrink-0 text-xs cursor-pointer">
                 Clear Date
               </Button>
             )}
@@ -121,7 +121,7 @@ export default function IndexPage() {
               searchParams={{ name: name || undefined, date: filterDate || undefined, tagId: filterTagId || undefined }}
               variant="filter"
               trigger={
-                <Button variant={filterTagId ? 'default' : 'outline'} size="icon" className="shrink-0">
+                <Button variant={filterTagId ? 'default' : 'outline'} size="icon" className="shrink-0 cursor-pointer">
                   <TagIcon className="h-4 w-4" />
                 </Button>
               }
@@ -137,7 +137,7 @@ export default function IndexPage() {
               onKeyDown={(e) => { if (e.key === 'Enter') addItem(); }}
             />
             <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 cursor-pointer"
               size="icon"
               onClick={addItem}
               disabled={!name}

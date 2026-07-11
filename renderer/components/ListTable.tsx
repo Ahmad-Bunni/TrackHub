@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from './ui/button';
 import { useItemStore } from '@/state';
 import type { Item, ItemTag, Tag } from '@prisma/client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ITEMS_PER_PAGE } from '@/lib/utils';
 import TagSelector from './TagSelector';
 import NoteSelector from './NoteSelector';
@@ -63,6 +63,18 @@ const ListTable = () => {
     window.electron.updateItemTags(itemId, tagIds, searchParams);
   };
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (deleteId != null && e.key === 'Enter') {
+        e.preventDefault();
+        window.electron.removeItem(deleteId, searchParams);
+        setDeleteId(null);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [deleteId, searchParams]);
+
   return (
     <>
       <Table>
@@ -102,7 +114,7 @@ const ListTable = () => {
                       onTagIdsChange={(tagIds) => handleTagChange(item.id, tagIds)}
                       variant="inline"
                       trigger={
-                        <Button variant="outline" size="icon" className="h-5 w-5 p-0 bg-background border rounded-md hover:bg-accent">
+                        <Button variant="outline" size="icon" className="h-5 w-5 p-0 bg-background border rounded-md hover:bg-accent cursor-pointer">
                           <Plus className="h-3 w-3" />
                         </Button>
                       }
@@ -119,7 +131,7 @@ const ListTable = () => {
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <NoteSelector item={item} />
-                    <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-destructive hover:text-destructive" onClick={() => setDeleteId(item.id)}>
+                    <Button variant="ghost" size="icon" className="h-5 w-5 p-0 text-destructive hover:text-destructive cursor-pointer" onClick={() => setDeleteId(item.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -134,11 +146,11 @@ const ListTable = () => {
           <div className="bg-background p-6 rounded-lg shadow-lg w-80 space-y-4">
             <p>Are you sure?</p>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setDeleteId(null)} className="cursor-pointer">Cancel</Button>
               <Button variant="destructive" onClick={() => {
                 window.electron.removeItem(deleteId, searchParams);
                 setDeleteId(null);
-              }}>Delete</Button>
+              }} className="cursor-pointer">Delete</Button>
             </div>
           </div>
         </div>

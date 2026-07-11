@@ -16,7 +16,7 @@ const Pagination = () => {
         size="icon"
         disabled={currentPage <= 1}
         onClick={goToPrevPage}
-        className="h-8 w-8"
+        className="h-8 w-8 cursor-pointer"
         aria-label="Go to previous page"
       >
         <ChevronLeftIcon className="h-4 w-4" />
@@ -29,7 +29,7 @@ const Pagination = () => {
         size="icon"
         disabled={currentPage >= totalPages}
         onClick={goToNextPage}
-        className="h-8 w-8"
+        className="h-8 w-8 cursor-pointer"
         aria-label="Go to next page"
       >
         <ChevronRightIcon className="h-4 w-4" />

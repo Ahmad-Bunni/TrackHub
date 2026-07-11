@@ -80,7 +80,7 @@ const TagSelector = ({ selectedTagIds, onTagIdsChange, trigger, variant = 'add',
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="cursor-pointer">
             Tag
           </Button>
         )}
@@ -170,7 +170,7 @@ const TagSelector = ({ selectedTagIds, onTagIdsChange, trigger, variant = 'add',
             size="sm"
             onClick={createTag}
             disabled={!newTagName.trim()}
-            className="h-7 text-xs w-full gap-1"
+            className="h-7 text-xs w-full gap-1 cursor-pointer"
           >
             <PlusIcon className="h-3 w-3" />
             Create
