@@ -17,34 +17,41 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('React ErrorBoundary caught:', error, info);
+    console.error("React ErrorBoundary caught:", error, info);
     try {
-      (window as any).electron.logRendererError({ message: error.message, stack: error.stack + '\n\n' + info.componentStack });
+      window.electron.logRendererError({
+        message: error.message,
+        stack: error.stack + "\n\n" + info.componentStack,
+      });
     } catch {}
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          padding: 24,
-          fontFamily: 'monospace',
-          color: '#ff4444',
-          backgroundColor: '#1a1a2e',
-          minHeight: '100vh',
-        }}>
-          <h2 style={{ margin: '0 0 12px' }}>Application Error</h2>
-          <pre style={{
-            whiteSpace: 'pre-wrap',
-            fontSize: 13,
-            backgroundColor: '#16213e',
-            padding: 12,
-            borderRadius: 4,
-            maxHeight: 400,
-            overflow: 'auto',
-          }}>
+        <div
+          style={{
+            padding: 24,
+            fontFamily: "monospace",
+            color: "#ff4444",
+            backgroundColor: "#1a1a2e",
+            minHeight: "100vh",
+          }}
+        >
+          <h2 style={{ margin: "0 0 12px" }}>Application Error</h2>
+          <pre
+            style={{
+              whiteSpace: "pre-wrap",
+              fontSize: 13,
+              backgroundColor: "#16213e",
+              padding: 12,
+              borderRadius: 4,
+              maxHeight: 400,
+              overflow: "auto",
+            }}
+          >
             {this.state.error?.message}
-            {'\n'}
+            {"\n"}
             {this.state.error?.stack}
           </pre>
         </div>

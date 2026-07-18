@@ -14,18 +14,18 @@ export interface SearchPayload {
 
 const electronAPI = {
   addItem: (payload: { name: string; tagIds?: number[]; search?: SearchPayload }) =>
-    ipcRenderer.send('addItem', payload),
+    ipcRenderer.invoke('addItem', payload),
   updateNote: (id: number, note?: string, search?: SearchPayload) =>
-    ipcRenderer.send('update', id, note, search),
-  removeItem: (id: number, search?: SearchPayload) => ipcRenderer.send('remove', id, search),
-  searchItem: (name: string) => ipcRenderer.send('search', name),
-  listItems: () => ipcRenderer.send('list'),
-  searchWithDate: (payload: SearchPayload) => ipcRenderer.send('searchWithDate', payload),
-  getAllTags: () => ipcRenderer.send('getAllTags'),
-  createTag: (payload: { name: string; color: string }) => ipcRenderer.send('createTag', payload),
+    ipcRenderer.invoke('update', id, note, search),
+  removeItem: (id: number, search?: SearchPayload) => ipcRenderer.invoke('remove', id, search),
+  searchItem: (name: string) => ipcRenderer.invoke('search', name),
+  listItems: () => ipcRenderer.invoke('list'),
+  searchWithDate: (payload: SearchPayload) => ipcRenderer.invoke('searchWithDate', payload),
+  getAllTags: () => ipcRenderer.invoke('getAllTags'),
+  createTag: (payload: { name: string; color: string }) => ipcRenderer.invoke('createTag', payload),
   updateItemTags: (id: number, tagIds: number[], search?: SearchPayload) =>
-    ipcRenderer.send('updateItemTags', id, tagIds, search),
-  deleteTag: (id: number, search?: SearchPayload) => ipcRenderer.send('deleteTag', id, search),
+    ipcRenderer.invoke('updateItemTags', id, tagIds, search),
+  deleteTag: (id: number, search?: SearchPayload) => ipcRenderer.invoke('deleteTag', id, search),
   logRendererError: (errorData: { message: string; stack: string }) => ipcRenderer.send('rendererError', errorData),
   startListening: (
     handler: (event: import('electron').IpcRendererEvent, ...args: any[]) => void,

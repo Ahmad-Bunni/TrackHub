@@ -4,10 +4,11 @@ import { createRoot } from "react-dom/client";
 import "@/styles/globals.css";
 import IndexPage from "./pages/index";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { Toaster } from "sonner";
 
 function sendToMain(errorObj: { message: string; stack: string }) {
   try {
-    (window as any).electron.logRendererError(errorObj);
+    window.electron.logRendererError(errorObj);
   } catch {}
 }
 
@@ -27,14 +28,15 @@ if (!rootEl) {
   document.body.innerHTML = '<div style="padding:20px;color:red;font-family:monospace">Root element not found</div>';
 } else {
   createRoot(rootEl).render(
-    <StrictMode>
-      <ErrorBoundary>
-        <div className="min-h-screen">
-          <main className="container py-4 space-y-6 max-w-5xl mx-auto">
-            <IndexPage />
-          </main>
-        </div>
-      </ErrorBoundary>
-    </StrictMode>,
+  <StrictMode>
+     <ErrorBoundary>
+       <div className="min-h-screen">
+         <main className="container py-4 space-y-6 max-w-5xl mx-auto">
+           <IndexPage />
+         </main>
+       </div>
+        <Toaster position="bottom-left" richColors duration={1500} />
+     </ErrorBoundary>
+   </StrictMode>,
   );
 }

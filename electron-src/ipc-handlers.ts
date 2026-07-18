@@ -1,7 +1,9 @@
 import type { Item, ItemTag } from '@prisma/client';
 import { PrismaClient } from '@prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import { ipcMain } from 'electron';
+import { app, ipcMain } from 'electron';
+import { mkdirSync } from 'fs';
+import { dirname, join } from 'path';
 
 type ItemWithTags = Item & { tags: ItemTag[] };
 
@@ -11,8 +13,31 @@ type SearchParams = {
   tagId?: number | null;
 };
 
-const adapter = new PrismaBetterSqlite3({ url: 'file:./dev.db' });
-const prisma = new PrismaClient({ adapter });
+let prisma: PrismaClient;
+
+/** Packaged apps can't use ./dev.db cwd — store under userData. */
+export function initDatabase() {
+  if (prisma) return;
+
+  const dbPath = isDevDb()
+    ? join(process.cwd(), 'dev.db')
+    : join(app.getPath('userData'), 'trackhub.db');
+
+  mkdirSync(dirname(dbPath), { recursive: true });
+
+  const url = `file:${dbPath.replace(/\\/g, '/')}`;
+  const adapter = new PrismaBetterSqlite3({ url });
+  prisma = new PrismaClient({ adapter });
+}
+
+function isDevDb() {
+  return !app.isPackaged;
+}
+
+function getPrisma() {
+  if (!prisma) initDatabase();
+  return prisma;
+}
 
 async function queryItems(params?: SearchParams): Promise<ItemWithTags[]> {
   const { name, date, tagId } = params || {};
@@ -21,22 +46,22 @@ async function queryItems(params?: SearchParams): Promise<ItemWithTags[]> {
   if (name) where.name = { startsWith: name };
   if (tagId) where.tags = { some: { tagId } };
   if (date) {
-    const d = new Date(date as Date | string);
+    const d = date instanceof Date ? date : new Date(date);
     const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     const end = new Date(start);
     end.setDate(end.getDate() + 1);
     where.date = { gte: start, lt: end };
   }
 
-  return prisma.item.findMany({
+  return getPrisma().item.findMany({
     where,
     include: { tags: true },
   });
 }
 
-ipcMain.on('addItem', async (event, { name, tagIds, search }: { name: string; tagIds?: number[]; search?: SearchParams }) => {
+ipcMain.handle('addItem', async (_event, { name, tagIds, search }: { name: string; tagIds?: number[]; search?: SearchParams }) => {
   try {
-    await prisma.item.create({
+    await getPrisma().item.create({
       data: {
         name: name.trim(),
         tags: tagIds?.length
@@ -44,65 +69,74 @@ ipcMain.on('addItem', async (event, { name, tagIds, search }: { name: string; ta
           : undefined,
       },
     });
-    event.sender.send('listed', await queryItems(search));
+    return await queryItems(search);
   } catch (error) {
-    sendError(event, error);
+    throw error;
   }
 });
 
-ipcMain.on('update', async (event, id: number, note?: string, search?: SearchParams) => {
+ipcMain.handle('update', async (_event, id: number, note?: string, search?: SearchParams) => {
   try {
-    await prisma.item.update({ where: { id }, data: { note: note?.trim() } });
-    event.sender.send('listed', await queryItems(search));
+    await getPrisma().item.update({ where: { id }, data: { note: note?.trim() } });
+    return await queryItems(search);
   } catch (error) {
-    sendError(event, error);
+    throw error;
   }
 });
 
-ipcMain.on('remove', async (event, id: number, search?: SearchParams) => {
+ipcMain.handle('remove', async (_event, id: number, search?: SearchParams) => {
   try {
-    await prisma.item.delete({ where: { id } });
-    event.sender.send('listed', await queryItems(search));
+    await getPrisma().item.delete({ where: { id } });
+    return await queryItems(search);
   } catch (error) {
-    sendError(event, error);
+    throw error;
   }
 });
 
-ipcMain.on('list', async (event) => {
-  try { event.sender.send('listed', await queryItems()); }
-  catch (error) { sendError(event, error); }
-});
-
-ipcMain.on('search', async (event, name: string | null) => {
-  try { event.sender.send('listed', await queryItems({ name: name || undefined })); }
-  catch (error) { sendError(event, error); }
-});
-
-ipcMain.on('searchWithDate', async (event, payload: SearchParams) => {
+ipcMain.handle('list', async (_event) => {
   try {
-    event.sender.send('listed', await queryItems(payload));
+    return await queryItems();
   } catch (error) {
-    sendError(event, error);
+    throw error;
   }
 });
 
-ipcMain.on('getAllTags', async (event) => {
-  try { event.sender.send('tagsListed', await prisma.tag.findMany({ where: {} })); }
-  catch (error) { sendError(event, error); }
-});
-
-ipcMain.on('createTag', async (event, payload: { name: string; color: string }) => {
+ipcMain.handle('search', async (_event, name: string | null) => {
   try {
-    await prisma.tag.create({ data: { name: payload.name.trim(), color: payload.color } });
-    event.sender.send('tagsListed', await prisma.tag.findMany({ where: {} }));
+    return await queryItems({ name: name || undefined });
   } catch (error) {
-    sendError(event, error);
+    throw error;
   }
 });
 
-ipcMain.on('updateItemTags', async (event, id: number, tagIds: number[], search?: SearchParams) => {
+ipcMain.handle('searchWithDate', async (_event, payload: SearchParams) => {
   try {
-    await prisma.item.update({
+    return await queryItems(payload);
+  } catch (error) {
+    throw error;
+  }
+});
+
+ipcMain.handle('getAllTags', async (_event) => {
+  try {
+    return await getPrisma().tag.findMany({ where: {} });
+  } catch (error) {
+    throw error;
+  }
+});
+
+ipcMain.handle('createTag', async (_event, payload: { name: string; color: string }) => {
+  try {
+    await getPrisma().tag.create({ data: { name: payload.name.trim(), color: payload.color } });
+    return await getPrisma().tag.findMany({ where: {} });
+  } catch (error) {
+    throw error;
+  }
+});
+
+ipcMain.handle('updateItemTags', async (_event, id: number, tagIds: number[], search?: SearchParams) => {
+  try {
+    await getPrisma().item.update({
       where: { id },
       data: {
         tags: {
@@ -111,22 +145,23 @@ ipcMain.on('updateItemTags', async (event, id: number, tagIds: number[], search?
         },
       },
     });
-    event.sender.send('listed', await queryItems(search));
+    return await queryItems(search);
   } catch (error) {
-    sendError(event, error);
+    throw error;
   }
 });
 
-ipcMain.on('deleteTag', async (event, tagId: number, search?: SearchParams) => {
+ipcMain.handle('deleteTag', async (_event, tagId: number, search?: SearchParams) => {
   try {
-    await prisma.tag.delete({ where: { id: tagId } });
-    event.sender.send('tagsListed', await prisma.tag.findMany({ where: {} }));
+    await getPrisma().tag.delete({ where: { id: tagId } });
+    const tags = await getPrisma().tag.findMany({ where: {} });
     const filteredSearch = search?.tagId === tagId
       ? { ...search, tagId: undefined }
       : search;
-    event.sender.send('listed', await queryItems(filteredSearch));
+    const items = await queryItems(filteredSearch);
+    return { tags, items };
   } catch (error) {
-    sendError(event, error);
+    throw error;
   }
 });
 
@@ -134,7 +169,3 @@ ipcMain.on('rendererError', (_event, errorData: { message: string; stack: string
   console.error('🔴 [Renderer]', errorData.message);
   if (errorData.stack) console.error(errorData.stack);
 });
-
-function sendError(event: Electron.IpcMainEvent, error: unknown) {
-  event.sender.send('error', { message: error instanceof Error ? error.message : String(error) });
-}

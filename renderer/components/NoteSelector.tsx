@@ -1,40 +1,59 @@
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { useItemStore } from '@/state';
-import type { Item } from '@prisma/client';
-import { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useItemStore } from "@/state";
+import type { Item } from "@prisma/client";
+import { Pencil } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const NoteSelector = ({ item }: { item: Item }) => {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState("");
   const name = useItemStore((s) => s.name);
   const filterDate = useItemStore((s) => s.filterDate);
   const filterTagId = useItemStore((s) => s.filterTagId);
 
-  const save = () => {
-    window.electron.updateNote(item.id, draft, {
+  const save = async () => {
+    const items = await window.electron.updateNote(item.id, draft, {
       name: name || undefined,
       date: filterDate || undefined,
       tagId: filterTagId || undefined,
     });
+    useItemStore.getState().setCurrentItems(items);
+    toast("Note updated", { description: "Note updated successfully" });
     setOpen(false);
   };
 
   return (
-    <Popover open={open} onOpenChange={(o) => { setDraft(item.note || ''); setOpen(o); }}>
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setDraft(item.note || "");
+        setOpen(o);
+      }}
+    >
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" className="h-5 w-5 p-0 bg-background border rounded-md hover:bg-accent cursor-pointer">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-5 w-5 p-0 bg-background border rounded-md hover:bg-accent cursor-pointer"
+        >
           <Pencil className="h-3 w-3" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3 grid gap-2" align="start">
-        <div className="text-xs font-medium">{item.note ? 'Edit Note' : 'Add Note'}</div>
+        <div className="text-xs font-medium">
+          {item.note ? "Edit Note" : "Add Note"}
+        </div>
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               save();
             }
@@ -43,7 +62,13 @@ const NoteSelector = ({ item }: { item: Item }) => {
           placeholder="Enter note"
           autoFocus
         />
-        <Button size="sm" className="h-7 text-xs w-full cursor-pointer" onClick={save}>Save</Button>
+        <Button
+          size="sm"
+          className="h-7 text-xs w-full cursor-pointer"
+          onClick={save}
+        >
+          Save
+        </Button>
       </PopoverContent>
     </Popover>
   );
