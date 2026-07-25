@@ -38,4 +38,6 @@ bun run dev · bun run build-electron · bun run validate · bun test tests/auto
 
 Errors: `🔴 [Renderer]` in terminal. Vite port **5173**.
 
+**Windows Ctrl+C note:** `concurrently` has signal handling issues on Windows. If processes get stuck, run: `taskkill /F /IM node.exe /IM electron.exe`
+
 **Scope:** smallest fix · no workaround stacks · no commit/tests unless asked.
