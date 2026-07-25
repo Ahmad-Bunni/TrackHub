@@ -8,7 +8,7 @@
   "icon": "main/hub.ico",
   "scripts": {
     "clean": "rimraf dist main renderer/out",
-    "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev": "concurrently -k \"vite --host 0.0.0.0\" \"wait-on tcp:5173 && electron .\"",
     "build-renderer": "vite build",
     "build-electron": "tsc -p ./electron-src/tsconfig.json",
     "build": "bun run build-renderer && bun run build-electron",
@@ -27,6 +27,7 @@
     "@radix-ui/react-slot": "^1.3.0",
     "@radix-ui/react-toast": "^1.2.19",
     "@tailwindcss/postcss": "^4.3.3",
+    "@tanstack/react-query": "^5.101.4",
     "better-sqlite3": "^12.11.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

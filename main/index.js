@@ -29,4 +29,10 @@ electron_1.app.on('ready', async () => {
         await mainWindow.loadFile((0, path_1.join)(__dirname, '../renderer/out/index.html'));
     }
 });
-electron_1.app.on('window-all-closed', electron_1.app.quit);
+electron_1.app.on('window-all-closed', () => {
+    // On Windows/Linux, quit the app when all windows are closed
+    // On macOS, the app and its menu bar are expected to remain active until explicitly quit
+    if (process.platform !== 'darwin') {
+        electron_1.app.quit();
+    }
+});

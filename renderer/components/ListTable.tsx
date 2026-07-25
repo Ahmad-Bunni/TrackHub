@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ITEMS_PER_PAGE, buildSearchParams } from "@/lib/utils";
+import { ITEMS_PER_PAGE } from "@/lib/utils";
 import { useItemStore } from "@/state";
 import type { Item, ItemTag, Tag } from "@prisma/client";
 import { Plus, Trash2 } from "lucide-react";
@@ -30,15 +30,30 @@ const TagPill = ({ tag, onClick }: { tag: Tag; onClick?: () => void }) => (
   </span>
 );
 
-const ListTable = () => {
-  const items = useItemStore((s) => s.items) as unknown as (Item & {
-    tags: ItemTag[];
-  })[];
-  const tags = useItemStore((s) => s.tags);
+const ListTable = ({
+  items,
+  tags,
+  updateNoteMutation,
+  removeItemMutation,
+  updateItemTagsMutation,
+  deleteTagMutation,
+}: {
+  items: (Item & { tags: ItemTag[] })[];
+  tags: Tag[];
+  updateNoteMutation: {
+    mutateAsync: (vars: { id: number; note?: string }) => Promise<any>;
+  };
+  removeItemMutation: {
+    mutateAsync: (id: number) => Promise<any>;
+  };
+  updateItemTagsMutation: {
+    mutateAsync: (vars: { id: number; tagIds: number[] }) => Promise<any>;
+  };
+  deleteTagMutation: {
+    mutateAsync: (vars: { tagId: number }) => Promise<any>;
+  };
+}) => {
   const page = useItemStore((s) => s.currentPage);
-  const name = useItemStore((s) => s.name);
-  const filterDate = useItemStore((s) => s.filterDate);
-  const filterTagId = useItemStore((s) => s.filterTagId);
   const setFilterTagId = useItemStore((s) => s.setFilterTagId);
   const [sortBy, setSortBy] = useState<"name" | "date">("name");
   const [sortAsc, setSortAsc] = useState(true);
@@ -65,43 +80,22 @@ const ListTable = () => {
     }
   };
 
-  const handleTagFilterClick = (tagId: number) => {
-    const nextTagId = filterTagId === tagId ? null : tagId;
-    setFilterTagId(nextTagId);
-    window.electron.searchWithDate({
-      name: name || undefined,
-      date: filterDate || undefined,
-      tagId: nextTagId || undefined,
-    });
-  };
-
-  const searchParams = buildSearchParams({
-    name,
-    date: filterDate,
-    tagId: filterTagId,
-  });
-
-  const handleTagChange = async (itemId: number, tagIds: number[]) => {
-    const items = await window.electron.updateItemTags(
-      itemId,
-      tagIds,
-      searchParams,
-    );
-    useItemStore.getState().setCurrentItems(items);
+  const handleTagChange = async (id: number, tagIds: number[]) => {
+    await updateItemTagsMutation.mutateAsync({ id, tagIds });
   };
 
   useEffect(() => {
     const handler = async (e: KeyboardEvent) => {
       if (deleteId != null && e.key === "Enter") {
         e.preventDefault();
-        const items = await window.electron.removeItem(deleteId, searchParams);
-        useItemStore.getState().setCurrentItems(items);
+        await removeItemMutation.mutateAsync(deleteId);
         setDeleteId(null);
+        toast.success("Item deleted", { description: "Item deleted successfully" });
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [deleteId, searchParams]);
+  }, [deleteId, removeItemMutation]);
 
   return (
     <>
@@ -143,7 +137,12 @@ const ListTable = () => {
                       <TagPill
                         key={it.tagId}
                         tag={tag}
-                        onClick={() => handleTagFilterClick(it.tagId)}
+                        onClick={() => {
+                          const currentFilterTagId = useItemStore.getState().filterTagId;
+                          setFilterTagId(
+                            currentFilterTagId === it.tagId ? null : it.tagId,
+                          );
+                        }}
                       />
                     );
                   })}
@@ -162,6 +161,7 @@ const ListTable = () => {
                         <Plus className="h-3 w-3" />
                       </Button>
                     }
+                    deleteTagMutation={deleteTagMutation}
                   />
                 </div>
               </TableCell>
@@ -181,7 +181,10 @@ const ListTable = () => {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-2">
-                  <NoteSelector item={item} />
+                  <NoteSelector
+                    item={item}
+                    updateNoteMutation={updateNoteMutation}
+                  />
                   <Button
                     variant="ghost"
                     size="icon"
@@ -212,13 +215,9 @@ const ListTable = () => {
               <Button
                 variant="destructive"
                 onClick={async () => {
-                  const items = await window.electron.removeItem(
-                    deleteId,
-                    searchParams,
-                  );
-                  useItemStore.getState().setCurrentItems(items);
+                  await removeItemMutation.mutateAsync(deleteId);
                   setDeleteId(null);
-                  toast("Item deleted", { description: "Item deleted successfully" });
+                  toast.success("Item deleted", { description: "Item deleted successfully" });
                 }}
                 className="cursor-pointer"
               >

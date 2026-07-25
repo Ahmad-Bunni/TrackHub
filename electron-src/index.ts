@@ -27,4 +27,10 @@ app.on('ready', async () => {
   }
 });
 
-app.on('window-all-closed', app.quit);
+app.on('window-all-closed', () => {
+  // On Windows/Linux, quit the app when all windows are closed
+  // On macOS, the app and its menu bar are expected to remain active until explicitly quit
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});

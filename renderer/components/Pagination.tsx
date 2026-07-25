@@ -2,11 +2,13 @@ import { Button } from "@/components/ui/button";
 import { ITEMS_PER_PAGE } from "@/lib/utils";
 import { useItemStore } from "@/state";
 import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
+import type { Item } from "@prisma/client";
 
-const Pagination = () => {
-  const { currentPage, items, goToPrevPage, goToNextPage } = useItemStore();
+const Pagination = ({ items }: { items: Item[] }) => {
+  const currentPage = useItemStore((s) => s.currentPage);
+  const goToPrevPage = useItemStore((s) => s.goToPrevPage);
+  const goToNextPage = useItemStore((s) => s.goToNextPage);
 
-  // ponytail: derived total pages, no store merge needed.
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE) || 1;
 
   return (

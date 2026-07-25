@@ -5,8 +5,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { type SearchPayload, updateSearchTagParam } from "@/lib/utils";
-import { useItemStore } from "@/state";
+import { type SearchPayload } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Tag } from "@prisma/client";
 import { PlusIcon, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -31,7 +32,9 @@ interface TagSelectorProps {
   onTagIdsChange: (tagIds: number[]) => void;
   trigger?: React.ReactNode;
   variant?: "add" | "filter" | "inline";
-  searchParams?: SearchPayload;
+  deleteTagMutation: {
+    mutateAsync: (vars: { tagId: number }) => Promise<any>;
+  };
 }
 
 const TagSelector = ({
@@ -39,14 +42,15 @@ const TagSelector = ({
   onTagIdsChange,
   trigger,
   variant = "add",
-  searchParams,
+  deleteTagMutation,
 }: TagSelectorProps) => {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0]);
   const [localSelected, setLocalSelected] = useState<number[]>(selectedTagIds);
 
-  const tags = useItemStore((s) => s.tags);
+  const tags = queryClient.getQueryData<Tag[]>(["tags"]) ?? [];
 
   useEffect(() => {
     if (open) {
@@ -54,12 +58,6 @@ const TagSelector = ({
       setNewTagName("");
     }
   }, [open, selectedTagIds]);
-
-  useEffect(() => {
-    if (open) {
-      useItemStore.getState().getAllTags();
-    }
-  }, [open]);
 
   const toggleTag = (tagId: number) => {
     const next = localSelected.includes(tagId)
@@ -79,25 +77,19 @@ const TagSelector = ({
     const next = localSelected.filter((id) => id !== tagId);
     setLocalSelected(next);
     onTagIdsChange(next);
-    const updatedSearch = updateSearchTagParam(searchParams, tagId);
-    const { tags, items } = await window.electron.deleteTag(
-      tagId,
-      updatedSearch,
-    );
-    useItemStore.getState().setTags(tags);
-    useItemStore.getState().setCurrentItems(items);
-    toast("Tag deleted", { description: "Tag deleted successfully" });
+    await deleteTagMutation.mutateAsync({ tagId });
+    toast.success("Tag deleted", { description: "Tag deleted successfully" });
   };
 
   const createTag = async () => {
     if (!newTagName.trim()) return;
-    const tags = await window.electron.createTag({
+    await window.electron.createTag({
       name: newTagName,
       color: newTagColor,
     });
-    useItemStore.getState().setTags(tags);
-    toast("Tag created", { description: "Tag created successfully" });
+    queryClient.invalidateQueries({ queryKey: ["tags"] });
     setNewTagName("");
+    toast.success("Tag created", { description: "Tag created successfully" });
   };
 
   return (

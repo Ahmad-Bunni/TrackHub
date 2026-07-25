@@ -4,27 +4,26 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useItemStore } from "@/state";
 import type { Item } from "@prisma/client";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const NoteSelector = ({ item }: { item: Item }) => {
+const NoteSelector = ({
+  item,
+  updateNoteMutation,
+}: {
+  item: Item;
+  updateNoteMutation: {
+    mutateAsync: (vars: { id: number; note?: string }) => Promise<any>;
+  };
+}) => {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
-  const name = useItemStore((s) => s.name);
-  const filterDate = useItemStore((s) => s.filterDate);
-  const filterTagId = useItemStore((s) => s.filterTagId);
 
   const save = async () => {
-    const items = await window.electron.updateNote(item.id, draft, {
-      name: name || undefined,
-      date: filterDate || undefined,
-      tagId: filterTagId || undefined,
-    });
-    useItemStore.getState().setCurrentItems(items);
-    toast("Note updated", { description: "Note updated successfully" });
+    await updateNoteMutation.mutateAsync({ id: item.id, note: draft });
+    toast.success("Note updated", { description: "Note updated successfully" });
     setOpen(false);
   };
 

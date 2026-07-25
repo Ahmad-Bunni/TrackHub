@@ -8,11 +8,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { buildSearchParams } from "@/lib/utils";
+import { buildSearchParams, updateSearchTagParam } from "@/lib/utils";
 import { useItemStore } from "@/state";
-import type { Item, Tag } from "@prisma/client";
+
 import { Calendar, Plus, Tag as TagIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/style.css";
 import { toast } from "sonner";
@@ -23,100 +24,108 @@ export default function IndexPage() {
   const {
     name,
     setName,
-    setCurrentItems,
-    setTags,
     filterDate,
     setFilterDate,
     filterTagId,
     setFilterTagId,
-    getAllTags,
   } = useItemStore();
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const queryClient = useQueryClient();
 
-  const listenersRef = useRef<{
-    handleMessage: (
-      event: import("electron").IpcRendererEvent,
-      args: Item[],
-    ) => void;
-    handleError: (
-      event: import("electron").IpcRendererEvent,
-      error: { message: string },
-    ) => void;
-    handleTags: (
-      event: import("electron").IpcRendererEvent,
-      tags: Tag[],
-    ) => void;
-  } | null>(null);
+  // --- Queries ---
 
-  useEffect(() => {
-    // Use refs to avoid stale closures in event handlers
-    const currentSetCurrentItems = setCurrentItems;
-    const currentSetTags = setTags;
-    const currentSetFilterTagId = setFilterTagId;
-
-    const handleMessage = (_: unknown, args: Item[]) =>
-      currentSetCurrentItems(args);
-    const handleError = (_: unknown, error: { message: string }) => {
-      console.error("IPC Error:", error.message);
-      if (error.message.includes("Unique constraint")) {
-        setTimeout(
-          () => setErrorMsg("A record with this name already exists."),
-          0,
-        );
-      }
-    };
-    const handleTags = (_: unknown, tags: Tag[]) => {
-      currentSetTags(tags);
-      const currentFilterTagId = useItemStore.getState().filterTagId;
-      if (
-        currentFilterTagId &&
-        !tags.some((t) => t.id === currentFilterTagId)
-      ) {
-        currentSetFilterTagId(null);
-      }
-    };
-    listenersRef.current = { handleMessage, handleError, handleTags };
-
-    window.electron.startListening(handleMessage, "listed");
-    window.electron.startListening(handleError, "error");
-    window.electron.startListening(handleTags, "tagsListed");
-    // ponytail: initial load via searchWithDate (no filter = all items), avoids race with listItems
-    window.electron.searchWithDate({
-      name: name || undefined,
-      date: filterDate || undefined,
-      tagId: filterTagId || undefined,
-    });
-    getAllTags();
-    return () => {
-      if (listenersRef.current) {
-        window.electron.stopListening(
-          listenersRef.current.handleMessage,
-          "listed",
-        );
-        window.electron.stopListening(
-          listenersRef.current.handleError,
-          "error",
-        );
-        window.electron.stopListening(
-          listenersRef.current.handleTags,
-          "tagsListed",
-        );
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    clearTimeout(searchTimerRef.current!);
-    searchTimerRef.current = setTimeout(() => {
+  const itemsQuery = useQuery({
+    queryKey: ["items", name, filterDate, filterTagId],
+    queryFn: () =>
       window.electron.searchWithDate({
         name: name || undefined,
         date: filterDate || undefined,
         tagId: filterTagId || undefined,
+      }),
+  });
+
+  const tagsQuery = useQuery({
+    queryKey: ["tags"],
+    queryFn: () => window.electron.getAllTags(),
+  });
+
+  // --- Mutations ---
+
+  const addItemMutation = useMutation({
+    mutationFn: (payload: { name: string; tagIds?: number[] }) =>
+      window.electron.addItem({
+        ...payload,
+        search: buildSearchParams({
+          name: name || undefined,
+          date: filterDate || undefined,
+          tagId: filterTagId || undefined,
+        }),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["items"] }),
+  });
+
+  const removeItemMutation = useMutation({
+    mutationFn: (id: number) =>
+      window.electron.removeItem(
+        id,
+        buildSearchParams({
+          name: name || undefined,
+          date: filterDate || undefined,
+          tagId: filterTagId || undefined,
+        }),
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["items"] }),
+  });
+
+  const updateNoteMutation = useMutation({
+    mutationFn: ({ id, note }: { id: number; note?: string }) =>
+      window.electron.updateNote(
+        id,
+        note,
+        buildSearchParams({
+          name: name || undefined,
+          date: filterDate || undefined,
+          tagId: filterTagId || undefined,
+        }),
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["items"] }),
+  });
+
+  const updateItemTagsMutation = useMutation({
+    mutationFn: ({ id, tagIds }: { id: number; tagIds: number[] }) =>
+      window.electron.updateItemTags(
+        id,
+        tagIds,
+        buildSearchParams({
+          name: name || undefined,
+          date: filterDate || undefined,
+          tagId: filterTagId || undefined,
+        }),
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["items"] }),
+  });
+
+  const deleteTagMutation = useMutation({
+    mutationFn: ({ tagId }: { tagId: number }) => {
+      const search = buildSearchParams({
+        name: name || undefined,
+        date: filterDate || undefined,
+        tagId: filterTagId || undefined,
       });
-    }, 150);
-  }, [name, filterDate, filterTagId]);
+      const updatedSearch = updateSearchTagParam(search, tagId);
+      return window.electron.deleteTag(tagId, updatedSearch);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["items"] });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+
+  // --- Derived data (replaces store items/tags) ---
+
+  const items = itemsQuery.data ?? [];
+  const tags = tagsQuery.data ?? [];
 
   useEffect(() => {
     if (!errorMsg) return;
@@ -124,24 +133,15 @@ export default function IndexPage() {
     return () => clearTimeout(t);
   }, [errorMsg]);
 
-  const searchParams = buildSearchParams({
-    name: undefined,
-    date: filterDate,
-    tagId: filterTagId,
-  });
-
   const addItem = async () => {
     if (!name) return;
-    const capturedName = name;
     try {
-      const items = await window.electron.addItem({
-        name: capturedName,
+      await addItemMutation.mutateAsync({
+        name,
         tagIds: filterTagId ? [filterTagId] : undefined,
-        search: searchParams,
       });
-      setCurrentItems(items);
       setName("");
-      toast("Item created", { description: "Item created successfully" });
+      toast.success("Item created", { description: "Item created successfully" });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("Unique constraint")) {
@@ -198,13 +198,7 @@ export default function IndexPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setFilterDate(null);
-                      window.electron.searchWithDate({
-                        name: name || undefined,
-                        tagId: filterTagId || undefined,
-                      });
-                    }}
+                    onClick={() => setFilterDate(null)}
                     className="w-full h-7 text-xs mt-1 cursor-pointer"
                   >
                     Clear Date
@@ -216,13 +210,7 @@ export default function IndexPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  setFilterDate(null);
-                  window.electron.searchWithDate({
-                    name: name || undefined,
-                    tagId: filterTagId || undefined,
-                  });
-                }}
+                onClick={() => setFilterDate(null)}
                 className="shrink-0 text-xs cursor-pointer"
               >
                 Clear Date
@@ -232,11 +220,6 @@ export default function IndexPage() {
               selectedTagIds={filterTagId ? [filterTagId] : []}
               onTagIdsChange={(tagIds) => {
                 setFilterTagId(tagIds[0] || null);
-              }}
-              searchParams={{
-                name: name || undefined,
-                date: filterDate || undefined,
-                tagId: filterTagId || undefined,
               }}
               variant="filter"
               trigger={
@@ -248,6 +231,7 @@ export default function IndexPage() {
                   <TagIcon className="h-4 w-4" />
                 </Button>
               }
+              deleteTagMutation={deleteTagMutation}
             />
           </div>
           <div className="flex items-center gap-2 flex-1">
@@ -271,7 +255,14 @@ export default function IndexPage() {
             </Button>
           </div>
         </div>
-        <ListTable />
+        <ListTable
+          items={items}
+          tags={tags}
+          updateNoteMutation={updateNoteMutation}
+          removeItemMutation={removeItemMutation}
+          updateItemTagsMutation={updateItemTagsMutation}
+          deleteTagMutation={deleteTagMutation}
+        />
       </div>
       <div
         className={`border-t bg-background ${CONTAINER}`}
@@ -283,7 +274,7 @@ export default function IndexPage() {
           borderBottom: "none",
         }}
       >
-        <Pagination />
+        <Pagination items={items} />
       </div>
     </div>
   );

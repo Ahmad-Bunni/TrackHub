@@ -34,17 +34,36 @@ async function queryItems(params) {
         where.name = { startsWith: name };
     if (tagId)
         where.tags = { some: { tagId } };
-    if (date) {
-        const d = date instanceof Date ? date : new Date(date);
-        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-        const end = new Date(start);
-        end.setDate(end.getDate() + 1);
-        where.date = { gte: start, lt: end };
-    }
-    return getPrisma().item.findMany({
-        where,
+    let items = await getPrisma().item.findMany({
+        where: Object.keys(where).length > 0 ? where : undefined,
         include: { tags: true },
     });
+    console.log(`[queryItems] total items=${items.length} name=${JSON.stringify(name)} date=${JSON.stringify(date)} dateType=${typeof date} tagId=${tagId}`);
+    // Debug: show first 3 item dates
+    for (let i = 0; i < Math.min(3, items.length); i++) {
+        const it = items[i];
+        const d = new Date(it.date);
+        console.log(`[queryItems] item[${i}] date=${it.date} parsed=${d.toISOString()} local=${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    }
+    // Filter by date in JS using local date string matching (avoids timezone issues)
+    if (date) {
+        const d = date instanceof Date ? date : new Date(date);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const localDateStr = `${yyyy}-${mm}-${dd}`;
+        console.log(`[queryItems] filtering by date=${localDateStr} (raw=${JSON.stringify(date)}, parsed=${d.toISOString()})`);
+        items = items.filter((item) => {
+            const itemDate = new Date(item.date);
+            const itemYyyy = itemDate.getFullYear();
+            const itemMm = String(itemDate.getMonth() + 1).padStart(2, '0');
+            const itemDd = String(itemDate.getDate()).padStart(2, '0');
+            const itemDateStr = `${itemYyyy}-${itemMm}-${itemDd}`;
+            return itemDateStr === localDateStr;
+        });
+        console.log(`[queryItems] after date filter: ${items.length} items`);
+    }
+    return items;
 }
 electron_1.ipcMain.handle('addItem', async (_event, { name, tagIds, search }) => {
     try {
