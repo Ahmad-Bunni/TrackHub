@@ -7,11 +7,13 @@ app.on('ready', async () => {
   initDatabase();
 
   const mainWindow = new BrowserWindow({
-    fullscreenable: false,
+    fullscreenable: true,
     width: 1024,
     height: 768,
+    minWidth: 1024,
+    minHeight: 768,
     autoHideMenuBar: true,
-    resizable: false,
+    resizable: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

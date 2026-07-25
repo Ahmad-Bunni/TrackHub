@@ -42,7 +42,7 @@ if (!rootEl) {
     <StrictMode>
       <ErrorBoundary>
         <div className="min-h-screen">
-          <main className="container py-4 space-y-6 max-w-5xl mx-auto">
+          <main className="py-4 space-y-6 w-full px-6">
             <IndexPage />
           </main>
         </div>

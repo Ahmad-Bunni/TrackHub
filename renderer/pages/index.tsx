@@ -19,7 +19,7 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/style.css";
 import { toast } from "sonner";
 
-const CONTAINER = "mx-auto w-full max-w-5xl px-6";
+const CONTAINER = "w-full px-6";
 
 export default function IndexPage() {
   const {
@@ -196,15 +196,15 @@ export default function IndexPage() {
   return (
     <div className="h-full flex flex-col bg-background">
       {errorMsg && (
-        <div className="mx-auto w-full max-w-5xl px-6 mt-2">
+        <div className="w-full px-6 mt-2">
           <div className="bg-destructive/10 text-destructive text-xs px-3 py-2 rounded-md border border-destructive/20">
             {errorMsg}
           </div>
         </div>
       )}
       <div className={`${CONTAINER} overflow-y-auto min-h-0 pb-4`}>
-        <div className="flex items-center justify-between gap-2 my-4">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-3 my-5">
+          <div className="flex items-center gap-3">
             <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -277,9 +277,9 @@ export default function IndexPage() {
               deleteTagMutation={deleteTagMutation}
             />
           </div>
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center gap-3 flex-1">
             <Input
-              className="w-full"
+              className="w-full h-10"
               placeholder="Search or enter new record"
               type="text"
               value={name}

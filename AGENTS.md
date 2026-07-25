@@ -22,15 +22,18 @@
 - Toast components should use `description` parameter instead of invalid `type: 'success'` parameter
 - All IPC calls should properly handle errors and return meaningful data
 - Database initialization functions should be properly ordered to avoid reference issues
+- UI uses ~25% larger spacing than default Tailwind (p-3, h-12, text-base are the new norms)
+- Layout is responsive (w-full, no container class, no max-w-5xl) — content fills window width
+- Electron window is resizable: min 1024x768, fullscreenable, default 1024x768
 
 ---
 
 ## Map
 
-`electron-src/` → edit · `main/` → runs · `renderer/` → UI · `global.d.ts` → types · `prisma/` → schema
+`electron-src/` → edit · `main/` → runs · `renderer/` → UI · `global.d.ts` → types · `prisma/` → schema · `tests/automated/` → bun test
 
 ```bash
-bun run dev · bun run build-electron · bun run validate
+bun run dev · bun run build-electron · bun run validate · bun test tests/automated/
 ```
 
 Errors: `🔴 [Renderer]` in terminal. Vite port **5173**.

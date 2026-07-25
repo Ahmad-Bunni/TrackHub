@@ -18,7 +18,7 @@ import { Button } from "./ui/button";
 
 const TagPill = ({ tag, onClick }: { tag: Tag; onClick?: () => void }) => (
   <span
-    className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-medium border cursor-pointer select-none hover:opacity-80"
+    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border cursor-pointer select-none hover:opacity-80"
     style={{
       backgroundColor: tag.color + "22",
       color: tag.color,
@@ -156,7 +156,7 @@ const ListTable = ({
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-5 w-5 p-0 bg-background border rounded-md hover:bg-accent cursor-pointer"
+                        className="h-6 w-6 p-0 bg-background border rounded-md hover:bg-accent cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
@@ -168,13 +168,13 @@ const ListTable = ({
               <TableCell className="max-w-[200px]">
                 {item.note ? (
                   <span
-                    className="text-xs text-muted-foreground truncate block"
+                    className="text-sm text-muted-foreground truncate block"
                     title={item.note}
                   >
                     {item.note}
                   </span>
                 ) : (
-                  <span className="text-xs text-muted-foreground/50 italic">
+                  <span className="text-sm text-muted-foreground/50 italic">
                     No note
                   </span>
                 )}
@@ -188,7 +188,7 @@ const ListTable = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 p-0 text-destructive hover:text-destructive cursor-pointer"
+                    className="h-6 w-6 p-0 text-destructive hover:text-destructive cursor-pointer"
                     onClick={() => setDeleteId(item.id)}
                   >
                     <Trash2 className="h-4 w-4" />

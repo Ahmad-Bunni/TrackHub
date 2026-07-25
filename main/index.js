@@ -10,11 +10,13 @@ const ipc_handlers_1 = require("./ipc-handlers");
 electron_1.app.on('ready', async () => {
     (0, ipc_handlers_1.initDatabase)();
     const mainWindow = new electron_1.BrowserWindow({
-        fullscreenable: false,
+        fullscreenable: true,
         width: 1024,
         height: 768,
+        minWidth: 1024,
+        minHeight: 768,
         autoHideMenuBar: true,
-        resizable: false,
+        resizable: true,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
