@@ -8,12 +8,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { buildSearchParams, updateSearchTagParam } from "@/lib/utils";
+import { ITEMS_PER_PAGE, buildSearchParams, updateSearchTagParam } from "@/lib/utils";
 import { useItemStore } from "@/state";
 
+import type { Item } from "@prisma/client";
 import { Calendar, Plus, Tag as TagIcon } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/style.css";
 import { toast } from "sonner";
@@ -32,6 +33,8 @@ export default function IndexPage() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const queryClient = useQueryClient();
+  const prevItemsRef = useRef<Item[]>([]);
+  const targetItemIdRef = useRef<number | null>(null);
 
   // --- Queries ---
 
@@ -44,6 +47,12 @@ export default function IndexPage() {
         tagId: filterTagId || undefined,
       }),
   });
+
+  // Reset currentPage to 1 if the query fails (DB disconnect, main crash).
+  // Without this, currentPage stays stale and Pagination renders invalid 'N of 1'.
+  useEffect(() => {
+    if (itemsQuery.error) useItemStore.getState().setPage(1);
+  }, [itemsQuery.error]);
 
   const tagsQuery = useQuery({
     queryKey: ["tags"],
@@ -62,7 +71,14 @@ export default function IndexPage() {
           tagId: filterTagId || undefined,
         }),
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["items"] }),
+    onSuccess: (newItems: Item[]) => {
+      queryClient.invalidateQueries({ queryKey: ["items"] });
+      const prevIds = new Set(prevItemsRef.current.map((i) => i.id));
+      const newItem = newItems.find((i) => !prevIds.has(i.id));
+      if (newItem) {
+        targetItemIdRef.current = newItem.id;
+      }
+    },
   });
 
   const removeItemMutation = useMutation({
@@ -75,7 +91,14 @@ export default function IndexPage() {
           tagId: filterTagId || undefined,
         }),
       ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["items"] }),
+    onSuccess: (newItems: Item[]) => {
+      queryClient.invalidateQueries({ queryKey: ["items"] });
+      const { currentPage } = useItemStore.getState();
+      const newTotalPages = Math.ceil(newItems.length / ITEMS_PER_PAGE) || 1;
+      if (currentPage > newTotalPages) {
+        useItemStore.getState().goToPrevPage();
+      }
+    },
   });
 
   const updateNoteMutation = useMutation({
@@ -127,14 +150,34 @@ export default function IndexPage() {
   const items = itemsQuery.data ?? [];
   const tags = tagsQuery.data ?? [];
 
+  // Reset to page 1 whenever search/filter params change
+  useEffect(() => {
+    useItemStore.getState().setPage(1);
+  }, [name, filterDate, filterTagId]);
+
   useEffect(() => {
     if (!errorMsg) return;
     const t = setTimeout(() => setErrorMsg(""), 3000);
     return () => clearTimeout(t);
   }, [errorMsg]);
 
+  useEffect(() => {
+    const targetId = targetItemIdRef.current;
+    if (!targetId) return;
+    const idx = items.findIndex((i) => i.id === targetId);
+    if (idx !== -1) {
+      const targetPage = Math.floor(idx / ITEMS_PER_PAGE) + 1;
+      const { currentPage } = useItemStore.getState();
+      if (targetPage !== currentPage) {
+        useItemStore.getState().setPage(targetPage);
+      }
+      targetItemIdRef.current = null;
+    }
+  }, [items]);
+
   const addItem = async () => {
     if (!name) return;
+    prevItemsRef.current = items;
     try {
       await addItemMutation.mutateAsync({
         name,

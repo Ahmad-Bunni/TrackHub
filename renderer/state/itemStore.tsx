@@ -14,6 +14,7 @@ interface ItemState {
   setNote: (note: string) => void;
   goToNextPage: () => void;
   goToPrevPage: () => void;
+  setPage: (page: number) => void;
 }
 
 export const useItemStore = create<ItemState>((set, get) => ({
@@ -34,4 +35,6 @@ export const useItemStore = create<ItemState>((set, get) => ({
       if (s.currentPage <= 1) return { ...s };
       return { currentPage: s.currentPage - 1 };
     }),
+  setPage: (page) =>
+    set((s) => ({ currentPage: Math.max(1, page) })),
 }));
