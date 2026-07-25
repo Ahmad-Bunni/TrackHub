@@ -9,8 +9,6 @@
   "scripts": {
     "clean": "rimraf dist main renderer/out",
     "dev": "concurrently -k \"vite --host 0.0.0.0\" \"wait-on tcp:5173 && electron .\"",
-    "dev:vite": "vite --host 0.0.0.0",
-    "dev:electron": "wait-on tcp:5173 && electron .",
     "build-renderer": "vite build",
     "build-electron": "tsc -p ./electron-src/tsconfig.json",
     "build": "bun run build-renderer && bun run build-electron",
